@@ -1,0 +1,14 @@
+node_modules
+.env
+dist
+build
+coverage
+
+app/node_modules
+server/node_modules
+
+app/dist
+server/dist
+
+.DS_Store
+Thumbs.db

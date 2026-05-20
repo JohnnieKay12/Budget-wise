@@ -1,0 +1,33 @@
+{
+  "name": "budgetwise-server",
+  "version": "1.0.0",
+  "description": "BudgetWise - Smart Money Companion Backend API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "budget",
+    "expense",
+    "tracker",
+    "mern"
+  ],
+  "author": "BudgetWise",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^7.2.0",
+    "mongoose": "^8.0.3",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
