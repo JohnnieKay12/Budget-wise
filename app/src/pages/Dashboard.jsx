@@ -19,6 +19,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
+import { Link } from 'react-router';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
 
@@ -236,7 +237,12 @@ const Dashboard = () => {
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Recent Transactions</h3>
-            <button className="text-sm text-emerald-400 hover:text-emerald-300">View All</button>
+            <Link
+              to="/expenses"
+              className="text-sm text-emerald-400 hover:text-emerald-300"
+            >
+              View All
+            </Link>
           </div>
           <div className="space-y-3">
             {dashboard?.recentTransactions?.length > 0 ? (
@@ -267,7 +273,12 @@ const Dashboard = () => {
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">Upcoming Reminders</h3>
-            <button className="text-sm text-emerald-400 hover:text-emerald-300">View All</button>
+            <Link
+              to="/reminders"
+              className="text-sm text-emerald-400 hover:text-emerald-300"
+            >
+              View All
+            </Link>
           </div>
           <div className="space-y-3">
             {dashboard?.upcomingReminders?.length > 0 ? (
