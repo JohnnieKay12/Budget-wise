@@ -37,6 +37,7 @@ const calculateBudgetSpent = async (budget, userId) => {
       return sum + Number(exp.amount || 0);
     }, 0);
 
+    console.log('Budget category:', budget.category);
     console.log('Total Spent:', spent);
 
     return spent;
