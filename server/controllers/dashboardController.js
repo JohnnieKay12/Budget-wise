@@ -27,7 +27,18 @@ exports.getDashboard = async (req, res) => {
 
     const budgets = await Budget.find({ user: req.userId, isActive: true });
     const totalBudget = budgets.reduce((sum, b) => sum + b.amount, 0);
-    const totalBudgetSpent = budgets.reduce((sum, b) => sum + b.spent, 0);
+    let totalBudgetSpent = 0;
+
+    for (const budget of budgets) {
+      const spent = monthlyExpenses
+        .filter(exp => {
+          if (budget.category === 'All Categories') return true;
+          return exp.category === budget.category;
+        })
+        .reduce((sum, exp) => sum + Number(exp.amount), 0);
+
+      totalBudgetSpent += spent;
+    }
 
     const savingsGoals = await SavingsGoal.find({ user: req.userId, isCompleted: false });
     const totalSavingsTarget = savingsGoals.reduce((sum, g) => sum + g.targetAmount, 0);
