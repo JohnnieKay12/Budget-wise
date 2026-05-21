@@ -2,50 +2,41 @@ const Budget = require('../models/Budget');
 const Expense = require('../models/Expense');
 
 const calculateBudgetSpent = async (budget, userId) => {
-  try {
-    const start = new Date(budget.startDate);
-    start.setHours(0, 0, 0, 0);
+  const start = new Date(budget.startDate);
+  start.setUTCHours(0, 0, 0, 0);
 
-    const end = new Date(budget.endDate);
-    end.setHours(23, 59, 59, 999);
+  const end = new Date(budget.endDate);
+  end.setUTCHours(23, 59, 59, 999);
 
-    const query = {
-      user: req.userId || userId,
-      date: {
-        $gte: start,
-        $lte: end
-      }
-    };
+  console.log('BUDGET START:', start);
+  console.log('BUDGET END:', end);
 
-    // Filter category only if not All Categories
-    if (budget.category !== 'All Categories') {
-      query.category = budget.category;
+  const query = {
+    user: userId,
+    date: {
+      $gte: start,
+      $lte: end
     }
+  };
 
-    console.log('---------------------------');
-    console.log('Budget Name:', budget.name);
-    console.log('Budget Category:', budget.category);
-    console.log('Start Date:', start);
-    console.log('End Date:', end);
-    console.log('Query:', query);
-
-    const expenses = await Expense.find(query);
-
-    console.log('Expenses Found:', expenses);
-
-    const spent = expenses.reduce((sum, exp) => {
-      return sum + Number(exp.amount || 0);
-    }, 0);
-
-    console.log('Budget category:', budget.category);
-    console.log('Total Spent:', spent);
-
-    return spent;
-
-  } catch (error) {
-    console.log('Calculate Error:', error);
-    return 0;
+  if (budget.category !== 'All Categories') {
+    query.category = budget.category;
   }
+
+  console.log('QUERY:', query);
+
+  const expenses = await Expense.find(query);
+
+  console.log('MATCHED EXPENSES:', expenses);
+
+  const spent = expenses.reduce(
+    (sum, exp) => sum + Number(exp.amount),
+    0
+  );
+
+  console.log('TOTAL SPENT:', spent);
+
+  return spent;
 };
 
 exports.getBudgets = async (req, res) => {
