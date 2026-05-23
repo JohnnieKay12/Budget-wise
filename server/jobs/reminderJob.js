@@ -4,36 +4,61 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const { sendReminderEmail } = require('../services/emailService');
 
-cron.schedule('*/1 * * * *', async () => {
-    console.log('Checking reminders...');
+cron.schedule('* * * * *', async () => {
+    try {
+        console.log('Checking reminders...');
 
-    const now = new Date();
-    const nextMinute = new Date(now.getTime() + 60000);
+        const now = new Date();
 
-    const reminders = await Reminder.find({
-        dueDate: {
-            $gte: now,
-            $lte: nextMinute
-        },
-        isCompleted: false
-    });
+        // check reminders from previous 1 minute to next 1 minute
+        const oneMinuteAgo = new Date(now.getTime() - 60000);
+        const nextMinute = new Date(now.getTime() + 60000);
 
-    for (const reminder of reminders) {
-        const user = await User.findById(reminder.user);
+        console.log('Current Time:', now);
 
-        if (!user) continue;
+        const reminders = await Reminder.find({
+            dueDate: {
+                $gte: oneMinuteAgo,
+                $lte: nextMinute
+            },
+            isCompleted: false,
+            notified: false
+        });
 
-        if (user.preferences.notifications) {
+        console.log(`Found ${reminders.length} reminders`);
+
+        for (const reminder of reminders) {
+            console.log('Sending reminder:', reminder.title);
+
+            const user = await User.findById(reminder.user);
+
+            if (!user) continue;
+
+            // Create in-app notification
             await Notification.create({
                 user: user._id,
                 title: 'Reminder Alert',
-                message: reminder.title,
-                type: 'reminder'
+                message: `Reminder: ${reminder.title}`,
+                type: 'warning',
+                category: 'reminder'
             });
+
+            // Send email if enabled
+            if (
+                user.preferences &&
+                user.preferences.emailAlerts
+            ) {
+                await sendReminderEmail(user.email, reminder);
+            }
+
+            // mark as notified
+            reminder.notified = true;
+            await reminder.save();
+
+            console.log('Reminder processed successfully');
         }
 
-        if (user.preferences.emailAlerts) {
-            await sendReminderEmail(user.email, reminder);
-        }
+    } catch (error) {
+        console.error('Reminder Cron Error:', error);
     }
 });

@@ -34,6 +34,8 @@ exports.createReminder = async (req, res) => {
   try {
     const { title, description, type, dueDate, isRecurring, recurringFrequency, amount, category, priority } = req.body;
 
+    console.log('Incoming Reminder Date:', dueDate);
+
     const reminder = await Reminder.create({
       user: req.userId,
       title,
@@ -46,6 +48,8 @@ exports.createReminder = async (req, res) => {
       category: category || 'General',
       priority: priority || 'medium'
     });
+
+    console.log('Saved Reminder Date:', reminder.dueDate);
 
     res.status(201).json({
       success: true,

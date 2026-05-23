@@ -155,7 +155,20 @@ const Reminders = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Due Date</Label>
-                <Input type="datetime-local" value={formData.dueDate} onChange={(e) => setFormData(p => ({ ...p, dueDate: e.target.value }))} className="bg-slate-800 border-slate-700 text-white" required />
+                <Input
+                  type="datetime-local"
+                  value={formData.dueDate}
+                  onChange={(e) => {
+                    const localDate = new Date(e.target.value);
+
+                    setFormData((p) => ({
+                      ...p,
+                      dueDate: localDate.toISOString()
+                    }));
+                  }}
+                  className="bg-slate-800 border-slate-700 text-white"
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Type</Label>
