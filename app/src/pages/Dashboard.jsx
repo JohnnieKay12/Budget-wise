@@ -20,6 +20,10 @@ import {
   PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
 import { Link } from 'react-router';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
 
@@ -62,23 +66,32 @@ const Dashboard = () => {
   }
 
   const summary = dashboard?.summary || {};
+
+  const displayCurrency = user?.currency || 'NGN';
+
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+  
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
+  };
+
   const categoryData = dashboard?.categoryBreakdown?.map(c => ({
     name: c._id,
-    value: c.amount
+    value: Number(c.amount)
   })) || [];
 
   const dailyData = dashboard?.dailyTrend?.map(d => ({
     date: d._id.slice(5),
-    amount: d.amount
+    amount: Number(d.amount)
   })) || [];
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0
-    }).format(amount || 0);
-  };
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -106,7 +119,7 @@ const Dashboard = () => {
       <motion.div variants={item} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SummaryCard
           title="Monthly Spending"
-          value={formatCurrency(summary.totalMonthlySpent)}
+          value={displayAmount(summary.totalMonthlySpent)}
           icon={<Receipt className="w-5 h-5" />}
           trend={summary.monthOverMonthChange}
           trendLabel="vs last month"
@@ -115,20 +128,20 @@ const Dashboard = () => {
         <SummaryCard
           title="Budget Used"
           value={`${summary.totalBudget > 0 ? Math.round((summary.totalBudgetSpent / summary.totalBudget) * 100) : 0}%`}
-          subtitle={`${formatCurrency(summary.totalBudgetSpent)} / ${formatCurrency(summary.totalBudget)}`}
+          subtitle={`${displayAmount(summary.totalBudgetSpent)} / ${displayAmount(summary.totalBudget)}`}
           icon={<Wallet className="w-5 h-5" />}
           color="blue"
         />
         <SummaryCard
           title="Savings Progress"
           value={`${summary.savingsProgress || 0}%`}
-          subtitle={`${formatCurrency(summary.totalSavingsCurrent)} saved`}
+          subtitle={`${displayAmount(summary.totalSavingsCurrent)} saved`}
           icon={<PiggyBank className="w-5 h-5" />}
           color="amber"
         />
         <SummaryCard
           title="Weekly Spending"
-          value={formatCurrency(summary.totalWeeklySpent)}
+          value={displayAmount(summary.totalWeeklySpent)}
           icon={<TrendingUp className="w-5 h-5" />}
           color="purple"
         />
@@ -150,26 +163,30 @@ const Dashboard = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="date" stroke="#475569" fontSize={12} />
-                <YAxis stroke="#475569" fontSize={12} tickFormatter={(v) => `₦${v/1000}k`} />
+                <YAxis
+                  stroke="#475569"
+                  fontSize={12}
+                  tickFormatter={(v) => displayAmount(v)}
+                />
                 <Tooltip
-  contentStyle={{
-    backgroundColor: '#0f172a',
-    border: '1px solid #1e293b',
-    borderRadius: '12px',
-    color: '#fff'
-  }}
-  itemStyle={{
-    color: '#e2e8f0'
-  }}
-  labelStyle={{
-    color: '#94a3b8'
-  }}
-  cursor={{ stroke: '#334155', strokeWidth: 1 }}
-  formatter={(value, name) => [
-    `₦${value.toLocaleString()}`,
-    name
-  ]}
-/>
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #1e293b',
+                    borderRadius: '12px',
+                    color: '#fff'
+                  }}
+                  itemStyle={{
+                    color: '#e2e8f0'
+                  }}
+                  labelStyle={{
+                    color: '#94a3b8'
+                  }}
+                  cursor={{ stroke: '#334155', strokeWidth: 1 }}
+                  formatter={(value, name) => [
+                    displayAmount(value),
+                    name
+                  ]}
+                />
                 <Area type="monotone" dataKey="amount" stroke="#10b981" fillOpacity={1} fill="url(#colorAmount)" strokeWidth={2} />
               </AreaChart>
             </ResponsiveContainer>
@@ -210,7 +227,7 @@ const Dashboard = () => {
                   }}
                   cursor={{ fill: 'rgba(255,255,255,0.05)' }}
                   formatter={(value, name) => [
-                    `₦${value.toLocaleString()}`,
+                    displayAmount(value),
                     name
                   ]}
                 />
@@ -224,7 +241,9 @@ const Dashboard = () => {
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                   <span className="text-sm text-slate-300">{cat.name}</span>
                 </div>
-                <span className="text-sm text-slate-400">₦{(cat.value / 1000).toFixed(0)}k</span>
+                <span className="text-sm text-slate-400">
+                  {displayAmount(cat.value)}
+                </span>
               </div>
             ))}
           </div>
@@ -257,7 +276,7 @@ const Dashboard = () => {
                       <p className="text-xs text-slate-400">{tx.category}</p>
                     </div>
                   </div>
-                  <span className="text-sm font-semibold text-red-400">-{formatCurrency(tx.amount)}</span>
+                  <span className="text-sm font-semibold text-red-400">-{displayAmount(tx.amount)}</span>
                 </div>
               ))
             ) : (
@@ -295,7 +314,7 @@ const Dashboard = () => {
                   </div>
                   <div className="text-right">
                     {reminder.amount > 0 && (
-                      <p className="text-sm font-medium text-white">{formatCurrency(reminder.amount)}</p>
+                      <p className="text-sm font-medium text-white">{displayAmount(reminder.amount)}</p>
                     )}
                     <p className="text-xs text-slate-500">{new Date(reminder.dueDate).toLocaleDateString()}</p>
                   </div>

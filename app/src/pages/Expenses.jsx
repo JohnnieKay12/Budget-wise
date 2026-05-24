@@ -10,6 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const CATEGORIES = [
   { value: 'Transport', icon: Car, color: '#3b82f6' },
@@ -35,6 +40,8 @@ const CATEGORIES = [
 const PAYMENT_METHODS = ['Cash', 'Card', 'Transfer', 'USSD', 'POS'];
 
 const Expenses = () => {
+  const { user } = useAuth();
+const displayCurrency = user?.currency || 'NGN';
   const [expenses, setExpenses] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -140,17 +147,26 @@ const Expenses = () => {
     return cat || { icon: Receipt, color: '#94a3b8' };
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount || 0);
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+  
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
   };
 
   const exportToWhatsApp = () => {
     let message = '*BudgetWise - Expense Report*\n\n';
-    message += `*Total This Month:* ${formatCurrency(stats?.currentMonthTotal || 0)}\n`;
+    message += `*Total This Month:* ${displayAmount(stats?.currentMonthTotal || 0)}\n`;
     message += `*Transactions:* ${stats?.transactionCount || 0}\n\n`;
     message += '*Recent Expenses:*\n';
     expenses.slice(0, 10).forEach((exp, i) => {
-      message += `${i + 1}. ${exp.title} - ${formatCurrency(exp.amount)} (${exp.category})\n`;
+      message += `${i + 1}. ${exp.title} - ${displayAmount(exp.amount)} (${exp.category})\n`;
     });
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/?text=${encoded}`, '_blank');
@@ -186,7 +202,7 @@ const Expenses = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Total This Month</p>
-            <p className="text-2xl font-bold text-white mt-1">{formatCurrency(stats.currentMonthTotal)}</p>
+            <p className="text-2xl font-bold text-white mt-1">{displayAmount(stats.currentMonthTotal)}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Transactions</p>
@@ -194,7 +210,7 @@ const Expenses = () => {
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Avg. Transaction</p>
-            <p className="text-2xl font-bold text-white mt-1">{formatCurrency(parseFloat(stats.averageTransaction))}</p>
+            <p className="text-2xl font-bold text-white mt-1">{displayAmount(parseFloat(stats.averageTransaction))}</p>
           </div>
         </div>
       )}
@@ -251,7 +267,9 @@ const Expenses = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Amount (₦)</Label>
+              <Label className="text-slate-300">
+                Amount
+              </Label>
                 <Input
                   type="number"
                   value={formData.amount}
@@ -361,7 +379,7 @@ const Expenses = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-semibold text-red-400">-{formatCurrency(expense.amount)}</span>
+                  <span className="text-sm font-semibold text-red-400">-{displayAmount(expense.amount)}</span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleEdit(expense)}

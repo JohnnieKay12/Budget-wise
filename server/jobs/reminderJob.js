@@ -10,16 +10,18 @@ cron.schedule('* * * * *', async () => {
 
         const now = new Date();
 
-        // check reminders from previous 1 minute to next 1 minute
-        const oneMinuteAgo = new Date(now.getTime() - 60000);
-        const nextMinute = new Date(now.getTime() + 60000);
+        // increase range to 5 minutes
+        const fiveMinutesAgo = new Date(now.getTime() - 5 * 60000);
+        const fiveMinutesLater = new Date(now.getTime() + 5 * 60000);
 
-        console.log('Current Time:', now);
+        console.log('Current UTC Time:', now);
+        console.log('Search Start:', fiveMinutesAgo);
+        console.log('Search End:', fiveMinutesLater);
 
         const reminders = await Reminder.find({
             dueDate: {
-                $gte: oneMinuteAgo,
-                $lte: nextMinute
+                $gte: fiveMinutesAgo,
+                $lte: fiveMinutesLater
             },
             isCompleted: false,
             notified: false
@@ -28,13 +30,18 @@ cron.schedule('* * * * *', async () => {
         console.log(`Found ${reminders.length} reminders`);
 
         for (const reminder of reminders) {
-            console.log('Sending reminder:', reminder.title);
+
+            console.log('Reminder Match Found:', reminder.title);
+            console.log('Reminder DueDate:', reminder.dueDate);
 
             const user = await User.findById(reminder.user);
 
-            if (!user) continue;
+            if (!user) {
+                console.log('User not found');
+                continue;
+            }
 
-            // Create in-app notification
+            // CREATE APP NOTIFICATION
             await Notification.create({
                 user: user._id,
                 title: 'Reminder Alert',
@@ -43,19 +50,26 @@ cron.schedule('* * * * *', async () => {
                 category: 'reminder'
             });
 
-            // Send email if enabled
+            console.log('In-app notification created');
+
+            // SEND EMAIL
             if (
                 user.preferences &&
                 user.preferences.emailAlerts
             ) {
+
+                console.log('Sending email to:', user.email);
+
                 await sendReminderEmail(user.email, reminder);
+
+                console.log('Email sent successfully');
             }
 
-            // mark as notified
+            // MARK AS NOTIFIED
             reminder.notified = true;
             await reminder.save();
 
-            console.log('Reminder processed successfully');
+            console.log('Reminder marked as notified');
         }
 
     } catch (error) {

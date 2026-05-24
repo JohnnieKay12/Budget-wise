@@ -10,6 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const CHALLENGE_TYPES = [
   { value: 'daily_saving', label: 'Daily Saving', icon: Target },
@@ -20,6 +25,22 @@ const CHALLENGE_TYPES = [
 ];
 
 const Challenges = () => {
+  const { user } = useAuth();
+
+  const displayCurrency = user?.currency || 'NGN';
+
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
+  };
   const [challenges, setChallenges] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -72,10 +93,6 @@ const Challenges = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount || 0);
-  };
-
   const getTypeInfo = (type) => CHALLENGE_TYPES.find(t => t.value === type) || CHALLENGE_TYPES[0];
 
   const COLORS = ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
@@ -106,7 +123,9 @@ const Challenges = () => {
                 <Input value={formData.title} onChange={(e) => setFormData(p => ({ ...p, title: e.target.value }))} placeholder="e.g., 30-Day No Junk Food" className="bg-slate-800 border-slate-700 text-white" required />
               </div>
               <div className="space-y-2">
-                <Label className="text-slate-300">Target Amount (₦)</Label>
+              <Label className="text-slate-300">
+                Target Amount ({displayCurrency})
+              </Label>
                 <Input type="number" value={formData.targetAmount} onChange={(e) => setFormData(p => ({ ...p, targetAmount: e.target.value }))} placeholder="50000" className="bg-slate-800 border-slate-700 text-white" required min="0" />
               </div>
               <div className="space-y-2">
@@ -179,7 +198,7 @@ const Challenges = () => {
                 <p className="text-sm text-slate-400 mb-4 line-clamp-2">{challenge.description || 'No description'}</p>
 
                 <div className="flex items-center justify-between mb-3 text-sm">
-                  <span className="text-slate-400">Target: <span className="text-white font-medium">{formatCurrency(challenge.targetAmount)}</span></span>
+                  <span className="text-slate-400">Target: <span className="text-white font-medium">{displayAmount(challenge.targetAmount)}</span></span>
                   <span className="text-slate-400">Days left: <span className="text-white font-medium">{challenge.daysRemaining || 0}</span></span>
                 </div>
 
@@ -193,7 +212,7 @@ const Challenges = () => {
                       <div className="h-full rounded-full transition-all duration-500" style={{ width: `${Math.min(100, progress)}%`, backgroundColor: challenge.color || '#f59e0b' }} />
                     </div>
                     <div className="flex items-center justify-between mt-1">
-                      <span className="text-xs text-slate-400">Saved: {formatCurrency(participant.currentAmount)}</span>
+                      <span className="text-xs text-slate-400">Saved: {displayAmount(participant.currentAmount)}</span>
                       {participant.streak > 0 && (
                         <span className="text-xs text-amber-400 flex items-center gap-1"><Flame className="w-3 h-3" /> {participant.streak} day streak</span>
                       )}

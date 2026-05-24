@@ -11,6 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const GOAL_CATEGORIES = [
   { value: 'Emergency Fund', icon: Target, color: '#ef4444' },
@@ -26,6 +31,8 @@ const GOAL_CATEGORIES = [
 ];
 
 const Savings = () => {
+  const { user } = useAuth();
+  const displayCurrency = user?.currency || 'NGN';
   const [goals, setGoals] = useState([]);
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -117,8 +124,17 @@ const Savings = () => {
     setFormData({ name: '', targetAmount: '', category: 'Emergency Fund', description: '', targetDate: '', color: '#ef4444' });
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount || 0);
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+  
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
   };
 
   const getCategoryInfo = (catName) => GOAL_CATEGORIES.find(c => c.value === catName) || GOAL_CATEGORIES[9];
@@ -139,15 +155,15 @@ const Savings = () => {
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Total Target</p>
-            <p className="text-xl font-bold text-white mt-1">{formatCurrency(overview.totalTarget)}</p>
+            <p className="text-xl font-bold text-white mt-1">{displayAmount(overview.totalTarget)}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Total Saved</p>
-            <p className="text-xl font-bold text-emerald-400 mt-1">{formatCurrency(overview.totalSaved)}</p>
+            <p className="text-xl font-bold text-emerald-400 mt-1">{displayAmount(overview.totalSaved)}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Remaining</p>
-            <p className="text-xl font-bold text-blue-400 mt-1">{formatCurrency(overview.totalRemaining)}</p>
+            <p className="text-xl font-bold text-blue-400 mt-1">{displayAmount(overview.totalRemaining)}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Completed</p>
@@ -236,7 +252,7 @@ const Savings = () => {
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm font-medium" style={{ color: goal.color || catInfo.color }}>{pct}%</span>
-                    <span className="text-sm text-slate-400">{formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}</span>
+                    <span className="text-sm text-slate-400">{displayAmount(goal.currentAmount)} / {displayAmount(goal.targetAmount)}</span>
                   </div>
                   <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
                     <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(100, pct)}%`, backgroundColor: goal.color || catInfo.color }} />

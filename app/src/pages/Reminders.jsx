@@ -56,7 +56,14 @@ const Reminders = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const data = { ...formData, amount: parseFloat(formData.amount) || 0 };
+      const data = {
+        ...formData,
+        amount: parseFloat(formData.amount) || 0,
+        dueDate: new Date(formData.dueDate).toISOString()
+      };
+      
+      console.log('Sending Reminder Date:', data.dueDate);
+      
       if (editingId) {
         await reminderAPI.update(editingId, data);
         toast.success('Reminder updated');
@@ -155,20 +162,7 @@ const Reminders = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Due Date</Label>
-                <Input
-                  type="datetime-local"
-                  value={formData.dueDate}
-                  onChange={(e) => {
-                    const localDate = new Date(e.target.value);
-
-                    setFormData((p) => ({
-                      ...p,
-                      dueDate: localDate.toISOString()
-                    }));
-                  }}
-                  className="bg-slate-800 border-slate-700 text-white"
-                  required
-                />
+                <Input type="datetime-local" value={formData.dueDate} onChange={(e) => setFormData(p => ({ ...p, dueDate: e.target.value }))} className="bg-slate-800 border-slate-700 text-white" required />
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-300">Type</Label>

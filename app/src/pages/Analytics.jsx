@@ -8,10 +8,17 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area, Legend
 } from 'recharts';
+import { useAuth } from '../context/AuthContext';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316', '#6366f1', '#14b8a6'];
 
 const Analytics = () => {
+  const { user } = useAuth();
+  const displayCurrency = user?.currency || 'NGN';
   const [expenseStats, setExpenseStats] = useState(null);
   const [budgetOverview, setBudgetOverview] = useState(null);
   const [dashboard, setDashboard] = useState(null);
@@ -40,31 +47,40 @@ const Analytics = () => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount || 0);
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+  
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
   };
 
   const categoryData = expenseStats?.categoryBreakdown?.map(c => ({
     name: c._id,
-    value: c.total,
+    value: convertCurrency(c.total, 'NGN', displayCurrency),
     count: c.count
   })) || [];
 
   const dailyData = expenseStats?.dailySpending?.map(d => ({
     date: d._id.slice(5),
-    amount: d.total
+    amount: convertCurrency(d.total, 'NGN', displayCurrency)
   })) || [];
 
   const paymentData = expenseStats?.paymentMethodBreakdown?.map(p => ({
     name: p._id || 'Unknown',
-    value: p.total
+    value: convertCurrency(p.total, 'NGN', displayCurrency)
   })) || [];
 
   const budgetData = budgetOverview?.byCategory?.map(b => ({
     name: b.name,
-    budget: b.amount,
-    spent: b.spent,
-    remaining: b.remaining
+    budget: convertCurrency(b.amount, 'NGN', displayCurrency),
+    spent: convertCurrency(b.spent, 'NGN', displayCurrency),
+    remaining: convertCurrency(b.remaining, 'NGN', displayCurrency)
   })) || [];
 
   if (loading) {
@@ -101,9 +117,9 @@ const Analytics = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard title="Total Spent" value={formatCurrency(expenseStats?.currentMonthTotal)} icon={<DollarSign className="w-5 h-5" />} color="emerald" />
+        <KPICard title="Total Spent" value={displayAmount(expenseStats?.currentMonthTotal)} icon={<DollarSign className="w-5 h-5" />} color="emerald" />
         <KPICard title="Transactions" value={expenseStats?.transactionCount || 0} icon={<BarChart3 className="w-5 h-5" />} color="blue" />
-        <KPICard title="Avg. Transaction" value={formatCurrency(parseFloat(expenseStats?.averageTransaction || 0))} icon={<TrendingUp className="w-5 h-5" />} color="amber" />
+        <KPICard title="Avg. Transaction" value={displayAmount(parseFloat(expenseStats?.averageTransaction || 0))} icon={<TrendingUp className="w-5 h-5" />} color="amber" />
         <KPICard
           title="vs Last Month"
           value={`${Math.abs(parseFloat(expenseStats?.monthOverMonthChange || 0)).toFixed(1)}%`}
@@ -121,9 +137,9 @@ const Analytics = () => {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={categoryData} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                <XAxis type="number" stroke="#475569" fontSize={12} tickFormatter={(v) => `₦${v/1000}k`} />
+                <XAxis type="number" stroke="#475569" fontSize={12} tickFormatter={(v) => displayAmount(v)} />
                 <YAxis dataKey="name" type="category" stroke="#475569" fontSize={11} width={100} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [`₦${value.toLocaleString()}`, 'Amount']} />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [displayAmount(value), 'Amount']} />
                 <Bar dataKey="value" fill="#10b981" radius={[0, 6, 6, 0]} barSize={20} />
               </BarChart>
             </ResponsiveContainer>
@@ -140,7 +156,24 @@ const Analytics = () => {
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [`₦${value.toLocaleString()}`, 'Amount']} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#0f172a',
+                    border: '1px solid #1e293b',
+                    borderRadius: '12px',
+                    color: '#ffffff'
+                  }}
+                  itemStyle={{
+                    color: '#ffffff'
+                  }}
+                  labelStyle={{
+                    color: '#ffffff'
+                  }}
+                  formatter={(value) => [
+                    formatCurrency(value, displayCurrency),
+                    'Amount'
+                  ]}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -162,8 +195,8 @@ const Analytics = () => {
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
               <XAxis dataKey="date" stroke="#475569" fontSize={11} />
-              <YAxis stroke="#475569" fontSize={12} tickFormatter={(v) => `₦${v/1000}k`} />
-              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [`₦${value.toLocaleString()}`, 'Spent']} />
+              <YAxis stroke="#475569" fontSize={12} tickFormatter={(v) => displayAmount(v)} />
+              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [displayAmount(value), 'Spent']} />
               <Area type="monotone" dataKey="amount" stroke="#3b82f6" fill="url(#colorDaily)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
@@ -179,8 +212,8 @@ const Analytics = () => {
               <BarChart data={budgetData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="name" stroke="#475569" fontSize={11} />
-                <YAxis stroke="#475569" fontSize={12} tickFormatter={(v) => `₦${v/1000}k`} />
-                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [`₦${value.toLocaleString()}`, '']} />
+                <YAxis stroke="#475569" fontSize={12} tickFormatter={(v) => displayAmount(v)} />
+                <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '12px' }} formatter={(value) => [displayAmount(value), '']} />
                 <Legend />
                 <Bar dataKey="budget" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Budget" />
                 <Bar dataKey="spent" fill="#ef4444" radius={[4, 4, 0, 0]} name="Spent" />

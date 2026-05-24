@@ -11,6 +11,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const CATEGORIES = [
   'Transport', 'Bolt/Uber', 'Food & Jollof', 'Generator Fuel', 'POS Charges',
@@ -22,6 +27,8 @@ const CATEGORIES = [
 const PERIODS = ['weekly', 'monthly', 'yearly'];
 
 const Budgets = () => {
+  const { user } = useAuth();
+  const displayCurrency = user?.currency || 'NGN';
   const [budgets, setBudgets] = useState([]);
   const [overview, setOverview] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -118,8 +125,17 @@ const Budgets = () => {
     });
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount || 0);
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+  
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
   };
 
   const getProgressColor = (percentage, threshold) => {
@@ -146,15 +162,15 @@ const Budgets = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Total Budget</p>
-            <p className="text-2xl font-bold text-white mt-1">{formatCurrency(overview.totalBudget)}</p>
+            <p className="text-2xl font-bold text-white mt-1">{displayAmount(overview.totalBudget)}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Total Spent</p>
-            <p className="text-2xl font-bold text-red-400 mt-1">{formatCurrency(overview.totalSpent)}</p>
+            <p className="text-2xl font-bold text-red-400 mt-1">{displayAmount(overview.totalSpent)}</p>
           </div>
           <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
             <p className="text-slate-400 text-sm">Remaining</p>
-            <p className="text-2xl font-bold text-emerald-400 mt-1">{formatCurrency(overview.totalRemaining)}</p>
+            <p className="text-2xl font-bold text-emerald-400 mt-1">{displayAmount(overview.totalRemaining)}</p>
           </div>
         </div>
       )}
@@ -253,7 +269,7 @@ const Budgets = () => {
                 <div className="mb-3">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-sm text-slate-400">{pct}% used</span>
-                    <span className="text-sm text-slate-300">{formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}</span>
+                    <span className="text-sm text-slate-300">{displayAmount(budget.spent)} / {displayAmount(budget.amount)}</span>
                   </div>
                   <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
                     <div
@@ -268,7 +284,7 @@ const Budgets = () => {
                     {new Date(budget.startDate).toLocaleDateString()} - {new Date(budget.endDate).toLocaleDateString()}
                   </span>
                   <span className={`text-xs font-medium ${pct >= budget.alertThreshold ? 'text-amber-400' : 'text-emerald-400'}`}>
-                    {formatCurrency(budget.remaining || 0)} left
+                    {displayAmount(budget.remaining || 0)} left
                   </span>
                 </div>
               </motion.div>

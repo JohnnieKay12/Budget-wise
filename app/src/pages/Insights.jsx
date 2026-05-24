@@ -7,6 +7,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useAuth } from '../context/AuthContext';
+import {
+  convertCurrency,
+  formatCurrency
+} from '../utils/currency';
 
 const TYPE_CONFIG = {
   spending_pattern: { icon: BarChart3, color: '#3b82f6', label: 'Spending Pattern' },
@@ -18,6 +23,22 @@ const TYPE_CONFIG = {
 };
 
 const Insights = () => {
+  const { user } = useAuth();
+
+  const displayCurrency = user?.currency || 'NGN';
+
+  const displayAmount = (amount) => {
+    const converted = convertCurrency(
+      amount,
+      'NGN',
+      displayCurrency
+    );
+
+    return formatCurrency(
+      converted,
+      displayCurrency
+    );
+  };
   const [insights, setInsights] = useState([]);
   const [softLifeScore, setSoftLifeScore] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -69,10 +90,6 @@ const Insights = () => {
     } catch (error) {
       console.error(error);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount || 0);
   };
 
   if (loading) {
